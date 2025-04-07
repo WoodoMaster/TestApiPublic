@@ -1,0 +1,39 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-war" name="ApiTest1:war exploded">
+    <output-path>$PROJECT_DIR$/target/spring-mvc-math-1.0-SNAPSHOT</output-path>
+    <properties id="maven-jee-properties">
+      <options>
+        <exploded>true</exploded>
+        <module>ApiTest1</module>
+        <packaging>war</packaging>
+      </options>
+    </properties>
+    <root id="root">
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="classes">
+          <element id="module-output" name="ApiTest1" />
+        </element>
+        <element id="directory" name="lib">
+          <element id="library" level="project" name="Maven: org.springframework:spring-webmvc:5.3.20" />
+          <element id="library" level="project" name="Maven: org.springframework:spring-aop:5.3.20" />
+          <element id="library" level="project" name="Maven: org.springframework:spring-beans:5.3.20" />
+          <element id="library" level="project" name="Maven: org.springframework:spring-context:5.3.20" />
+          <element id="library" level="project" name="Maven: org.springframework:spring-core:5.3.20" />
+          <element id="library" level="project" name="Maven: org.springframework:spring-jcl:5.3.20" />
+          <element id="library" level="project" name="Maven: org.springframework:spring-expression:5.3.20" />
+          <element id="library" level="project" name="Maven: org.springframework:spring-web:5.3.20" />
+          <element id="library" level="project" name="Maven: javax.servlet:jstl:1.2" />
+          <element id="library" level="project" name="Maven: com.google.code.gson:gson:2.8.9" />
+          <element id="library" level="project" name="Maven: org.slf4j:jcl-over-slf4j:1.7.12" />
+          <element id="library" level="project" name="Maven: ch.qos.logback:logback-classic:1.1.3" />
+          <element id="library" level="project" name="Maven: ch.qos.logback:logback-core:1.1.3" />
+          <element id="library" level="project" name="Maven: org.slf4j:slf4j-api:1.7.36" />
+        </element>
+      </element>
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/target/spring-mvc-math-1.0-SNAPSHOT/META-INF/MANIFEST.MF" />
+      </element>
+      <element id="javaee-facet-resources" facet="ApiTest1/web/Web" />
+    </root>
+  </artifact>
+</component>

@@ -1,0 +1,25 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 30px;
+}
+.container {
+    max-width: 600px;
+    margin: auto;
+}
+
+input[type="text"], input[type="submit"] {
+    padding: 10px;
+    margin: 5px 0;
+    width: 100%;
+}
+
+.payload {
+    background-color: #f4f4f4;
+    padding: 10px;
+    margin-top: 20px;
+    border-radius: 8px;
+}
+
+.error {
+    color: red;
+}

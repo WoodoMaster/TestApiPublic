@@ -1,0 +1,26 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+.links {
+    margin: 20px 0;
+}
+
+a {
+    display: inline-block;
+    margin-right: 15px;
+    padding: 10px;
+    background-color: #f0f0f0;
+    text-decoration: none;
+    color: #333;
+}
+
+form {
+    margin: 20px 0;
+}
+
+input {
+    margin: 5px;
+    padding: 5px;
+}
