@@ -10,7 +10,7 @@
     <packaging>war</packaging>
 
     <properties>
-        <java.version>11</java.version> <!-- Версия Java -->
+        <java.version>17</java.version> <!-- Версия Java -->
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <spring.version>5.3.20</spring.version>
@@ -24,6 +24,13 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>
             <version>${spring.version}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.springframework/spring-websocket -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-websocket</artifactId>
+            <version>5.3.39</version>
         </dependency>
 
         <!-- JSTL -->
@@ -65,6 +72,16 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>1.7.36</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.13.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-websocket</artifactId>
+            <version>9.0.73</version> <!-- версия должна соответствовать вашему Tomcat -->
         </dependency>
     </dependencies>
 

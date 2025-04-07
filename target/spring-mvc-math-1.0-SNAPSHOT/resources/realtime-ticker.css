@@ -1,0 +1,173 @@
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+    background-color: #f5f5f5;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+label {
+    font-weight: bold;
+}
+
+select {
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    min-width: 200px;
+}
+
+button {
+    padding: 8px 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+#unsubscribeBtn {
+    background-color: #f44336;
+}
+
+#unsubscribeBtn:hover {
+    background-color: #d32f2f;
+}
+
+.ticker-data-container {
+    margin-top: 30px;
+    display: none;
+}
+
+.price-change-container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 20px;
+}
+
+.price-info {
+    flex: 1;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);
+}
+
+.chart-container {
+    flex: 2;
+    height: 300px;
+}
+
+.ticker-details {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.ticker-details th, .ticker-details td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.ticker-details th {
+    background-color: #f2f2f2;
+}
+
+.ticker-details tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.positive {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.negative {
+    color: #f44336;
+    font-weight: bold;
+}
+
+.error {
+    color: #f44336;
+    background-color: #ffebee;
+    padding: 10px;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+#currentSymbol {
+    margin-top: 0;
+    color: #333;
+}
+
+.price, .change, .percent-change {
+    margin: 10px 0;
+    font-size: 1.1em;
+}
+
+.price span, .change span, .percent-change span {
+    font-weight: bold;
+}
+
+.min-max-current-container {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+.min-max-current-container h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    text-align: center;
+    color: #333;
+}
+.min-max-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.min-max-table th, .min-max-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+.min-max-table th {
+    background-color: #f2f2f2;
+    width: 40%; /* Adjust as needed */
+}
+.min-max-table td span {
+    font-weight: bold;
+}
