@@ -1,478 +1,225 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@page contentType="text/html; charset=UTF-8" language="java" %>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <html>
 <head>
-    <title>Real-time Ticker Information</title>
-    <link rel="stylesheet" type="text/css" href="${pageContext.request.contextPath}/resources/realtime-ticker.css">
+    <title>Real-time Ticker & Trading</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/realtime-ticker.css"/>
 </head>
 <body>
 <div class="container">
-    <h1>Real-time Ticker Information</h1>
-
+    <h1>Real-time Ticker & Trading</h1>
     <div class="form-group">
         <label for="symbol">Select Symbol:</label>
         <c:choose>
             <c:when test="${not empty symbols}">
-                <select id="symbol" required>
+                <select id="symbol">
                     <option value="">-- Select Symbol --</option>
-                    <c:forEach var="sym" items="${symbols}">
-                        <option value="${sym}">${sym}</option>
+                    <c:forEach var="s" items="${symbols}">
+                        <option value="${s}" ${s==selectedSymbol?'selected':''}>${s}</option>
                     </c:forEach>
                 </select>
                 <button id="subscribeBtn">Subscribe</button>
                 <button id="unsubscribeBtn" disabled>Unsubscribe</button>
             </c:when>
             <c:otherwise>
-                <p class="error">Failed to load symbols list. Please refresh the page or check server logs.</p>
+                <p class="error">Failed to load symbols list. Refresh page.</p>
                 <c:if test="${not empty symbolsError}">
                     <p class="error">${symbolsError}</p>
                 </c:if>
             </c:otherwise>
         </c:choose>
     </div>
-
-    <%-- Ticker Data Container --%>
-    <div id="tickerData" class="ticker-data-container" style="display: none;"> <%-- Hide initially --%>
-        <div class="price-change-container">
-            <%-- Price Info remains --%>
-            <div class="price-info">
-                <h2 id="currentSymbol"></h2>
-                <div class="price">Last Price: <span id="lastPrice">---</span></div>
-                <div class="change">24h Change: <span id="priceChange">---</span></div>
-                <div class="percent-change">24h Change (%): <span id="priceChangePercent">---</span></div>
-            </div>
-
-            <%-- NEW: Min/Max/Current Summary Table --%>
-            <div class="min-max-current-container">
-                <h3>Session Price Summary</h3>
-                <table class="min-max-table">
-                    <thead>
-                    <tr>
-                        <th>Metric</th>
-                        <th>Value</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td>Current</td>
-                        <td><span id="summaryCurrentPrice">---</span></td>
-                    </tr>
-                    <tr>
-                        <td>Min (Session)</td>
-                        <td><span id="summaryMinPrice">---</span></td>
-                    </tr>
-                    <tr>
-                        <td>Max (Session)</td>
-                        <td><span id="summaryMaxPrice">---</span></td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
+    <div id="tickerData" style="display:none;">
+        <div>
+            <h2 id="currentSymbol"></h2>
+            <p>Last Price: <span id="lastPrice">---</span></p>
+            <p>24h Change: <span id="priceChange">---</span></p>
+            <p>24h Change (%): <span id="priceChangePercent">---</span></p>
         </div>
-
-        <%-- Detailed Ticker Table remains --%>
-        <table class="ticker-details">
-            <thead>
-            <tr>
-                <th>Parameter</th>
-                <th>Value</th>
-            </tr>
-            </thead>
+        <div>
+            <h3>Session Summary</h3>
+            <table>
+                <tr><td>Current</td><td id="summaryCurrentPrice">---</td></tr>
+                <tr><td>Min</td><td id="summaryMinPrice">---</td></tr>
+                <tr><td>Max</td><td id="summaryMaxPrice">---</td></tr>
+            </table>
+        </div>
+        <table>
+            <thead><tr><th>Param</th><th>Value</th></tr></thead>
             <tbody id="tickerDetails">
             <tr><td colspan="2">Waiting for data...</td></tr>
             </tbody>
         </table>
     </div>
-
-    <div id="errorContainer" class="error" style="display: none;">
-        <h2>Error</h2>
+    <div id="errorContainer" class="error" style="display:none;">
         <p id="errorMessage"></p>
     </div>
+    <div class="order-section">
+        <h2>Place Order</h2>
+        <c:if test="${not empty orderSuccessMessage}">
+            <div class="order-message order-success">${orderSuccessMessage}</div>
+        </c:if>
+        <c:if test="${not empty orderErrorMessage}">
+            <div class="order-message order-error">
+                    ${orderErrorMessage}
+                <c:if test="${not empty orderErrorCode}">(Code: ${orderErrorCode})</c:if>
+            </div>
+        </c:if>
+
+        <div class="api-key-warning"><strong>Warning:</strong> Entering API keys here is insecure for real use. Don’t use real keys.</div>
+        <div class="order-form-container">
+            <c:forEach var="side" items="${['BUY','SELL']}">
+                <form action="${pageContext.request.contextPath}/order/place" method="post" class="order-form">
+                    <h3>${side} Order</h3>
+                    <input type="hidden" name="symbol" id="${side}Symbol"/>
+                    <input type="hidden" name="side" value="${side}"/>
+                    <label>API Key:</label>
+                    <input type="password" name="apiKey" required />
+                    <label>Secret Key:</label>
+                    <input type="password" name="secretKey" required />
+                    <label>Order Type:</label>
+                    <select name="type" id="${side}Type" required>
+                        <option value="LIMIT">LIMIT</option>
+                        <option value="MARKET">MARKET</option>
+                    </select>
+                    <label>Quantity:</label>
+                    <input type="number" step="any" name="quantity" placeholder="e.g., 0.01" required />
+                    <div class="price-input-group" id="${side}PriceGroup">
+                        <label>Price (LIMIT only):</label>
+                        <input type="number" step="any" name="price" id="${side}Price" placeholder="e.g., 50000.50"/>
+                    </div>
+                    <button type="submit" class="${side=='BUY' ? 'buy-button' : 'sell-button'}">Place ${side} Order</button>
+                </form>
+            </c:forEach>
+
+        </div>
+    </div>
 </div>
-
 <script>
-    let socket;
-    let currentSymbol = '';
-    // Variables to track min/max price during the current subscription session
-    let sessionMinPrice = null;
-    let sessionMaxPrice = null;
+    let socket, currentSymbol='', sessionMin=null, sessionMax=null;
 
-    // --- FIX: Declare UI element variables here (outside DOMContentLoaded) ---
-    let symbolSelect;
-    let subscribeBtn;
-    let unsubscribeBtn;
-    let tickerDataContainer;
-    let errorContainer;
-    let tickerDetailsBody;
-    // --- End FIX ---
+    const byId = id => document.getElementById(id);
+    const show = el => el && (el.style.display='block');
+    const hide = el => el && (el.style.display='none');
 
+    document.addEventListener('DOMContentLoaded', ()=>{
+        const sel = byId('symbol'), btnSub=byId('subscribeBtn'), btnUnsub=byId('unsubscribeBtn'),
+            tickerData=byId('tickerData'), errC=byId('errorContainer'), errM=byId('errorMessage');
 
-    document.addEventListener('DOMContentLoaded', function() {
-        // --- FIX: Assign the variables inside DOMContentLoaded ---
-        symbolSelect = document.getElementById('symbol');
-        subscribeBtn = document.getElementById('subscribeBtn');
-        unsubscribeBtn = document.getElementById('unsubscribeBtn');
-        tickerDataContainer = document.getElementById('tickerData');
-        errorContainer = document.getElementById('errorContainer');
-        tickerDetailsBody = document.getElementById('tickerDetails');
-        // --- End FIX ---
-
-
-        // Safety check in case the elements aren't found (e.g., if symbols failed to load)
-        if (!symbolSelect || !subscribeBtn || !unsubscribeBtn) {
-            console.error("Crucial UI elements not found. Subscription buttons disabled.");
-            showError("Initialization error: UI elements missing. Cannot subscribe.");
-            if(subscribeBtn) subscribeBtn.disabled = true;
-            if(unsubscribeBtn) unsubscribeBtn.disabled = true;
-            return; // Stop further execution if elements are missing
-        }
-
-        subscribeBtn.addEventListener('click', function() {
-            const symbol = symbolSelect.value;
-            if (!symbol) {
-                showError('Please select a symbol');
-                return;
-            }
-
-            currentSymbol = symbol;
-            // Reset session min/max for new subscription
-            sessionMinPrice = null;
-            sessionMaxPrice = null;
-            document.getElementById('summaryCurrentPrice').textContent = '---';
-            document.getElementById('summaryMinPrice').textContent = '---';
-            document.getElementById('summaryMaxPrice').textContent = '---';
-
-            // Reset other UI elements
-            tickerDetailsBody.innerHTML = '<tr><td colspan="2">Subscribing...</td></tr>';
-            document.getElementById('currentSymbol').textContent = symbol;
-            document.getElementById('lastPrice').textContent = '---';
-            document.getElementById('priceChange').textContent = '---';
-            document.getElementById('priceChangePercent').innerHTML = '---';
-
-            subscribeToTicker(symbol);
-            symbolSelect.disabled = true;
-            subscribeBtn.disabled = true;
-            unsubscribeBtn.disabled = false;
-            tickerDataContainer.style.display = 'block';
-            errorContainer.style.display = 'none';
+        // toggle LIMIT price fields
+        ['BUY','SELL'].forEach(side=>{
+            const typeSel=byId(side+'Type'), priceGroup=byId(side+'PriceGroup'), priceInput=byId(side+'Price');
+            const toggle = ()=> {
+                if(typeSel.value==='LIMIT'){ priceGroup.style.display='block'; priceInput.required=true; }
+                else{ priceGroup.style.display='none'; priceInput.required=false; priceInput.value=''; }
+            };
+            toggle();
+            typeSel.onchange=toggle;
         });
 
-        unsubscribeBtn.addEventListener('click', function() {
-            if (socket) {
-                socket.close();
-                console.log("WebSocket closed by user."); // Added log
-            } else {
-                console.log("Unsubscribe clicked, but no active socket."); // Added log
-            }
-            symbolSelect.disabled = false;
-            subscribeBtn.disabled = false;
-            unsubscribeBtn.disabled = true;
-            tickerDataContainer.style.display = 'none';
-            currentSymbol = '';
-            // Reset min/max (optional, will be reset on next subscribe anyway)
-            sessionMinPrice = null;
-            sessionMaxPrice = null;
-            document.getElementById('currentSymbol').textContent = '';
-            // Check if tickerDetailsBody exists before updating
-            if (tickerDetailsBody) {
-                tickerDetailsBody.innerHTML = '<tr><td colspan="2">Unsubscribed</td></tr>';
-            }
-        });
+        btnSub.onclick = ()=>{
+            if(!sel.value) { showError('Select symbol'); return; }
+            currentSymbol = sel.value;
+            ['BUY','SELL'].forEach(side=> byId(side+'Symbol').value = currentSymbol);
+            resetSession();
+            subscribeTicker(currentSymbol);
+            sel.disabled=true; btnSub.disabled=true; btnUnsub.disabled=false;
+            show(tickerData); hide(errC);
+        };
+
+        btnUnsub.onclick=()=>{
+            socket?.close();
+            sel.disabled=false; btnSub.disabled=false; btnUnsub.disabled=true;
+            hide(tickerData); currentSymbol=''; resetSession();
+        };
     });
 
-    function subscribeToTicker(symbol) {
-        if (socket && socket.readyState !== WebSocket.CLOSED) {
-            console.log('Closing existing WebSocket connection before new subscription.');
-            socket.close();
-        }
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-        const contextPath = '${pageContext.request.contextPath}';
-        // Ensure contextPath logic is robust, especially if context path is root "/"
-        const baseWsUrl = wsProtocol + window.location.host + (contextPath && contextPath !== '/' ? contextPath : '');
-        const wsUrl = (window.location.protocol === 'https:' ? 'wss://' : 'ws://')
-            + window.location.host
-            + '/ApiTest1_war/ws/ticker';
-
-
-        console.log('Connecting to WebSocket:', wsUrl);
-        socket = new WebSocket(wsUrl);
-
-        socket.onopen = function() {
-            console.log('WebSocket connection established');
-            console.log('Sending symbol:', symbol);
-            // Ensure socket is open before sending
-            if (socket.readyState === WebSocket.OPEN) {
-                socket.send(symbol);
-            } else {
-                console.error("Socket not open when trying to send symbol.");
-                showError("Failed to send subscription request.");
-                // Optionally trigger unsubscribe logic here
-                if(unsubscribeBtn) unsubscribeBtn.click();
-            }
+    function subscribeTicker(sym){
+        if(socket) socket.close();
+        let ctx='${pageContext.request.contextPath}'; if(ctx==='/')ctx='';
+        const url = (location.protocol==='https:'?'wss':'ws')+'://'+location.host+ctx+'/ws/ticker';
+        socket=new WebSocket(url);
+        socket.onopen=()=>socket.send(sym);
+        socket.onmessage=e=>{
+            try{
+                const d=JSON.parse(e.data);
+                if(d.error){ showError(d.error); socket.close(); return; }
+                if(!d.symbol || d.symbol===currentSymbol) updateTicker(d);
+            }catch(err){ showError('Parse error'); console.log(err); }
         };
-
-        socket.onmessage = function(event) {
-            console.log('WebSocket message received:', event.data);
-            try {
-                const data = JSON.parse(event.data);
-
-                if (data.error) {
-                    showError(data.error);
-                    // Check if unsubscribeBtn exists before clicking
-                    if(unsubscribeBtn) unsubscribeBtn.click();
-                    return;
-                }
-
-                // Ensure data is for the currently subscribed symbol, or handle general updates if needed
-                if ((data.symbol && data.symbol === currentSymbol) || !data.symbol) { // Be careful with !data.symbol, ensure it's expected
-                    updateTickerData(data);
-                } else {
-                    console.log("Received data for different symbol, ignoring:", data.symbol);
-                }
-
-            } catch (e) {
-                console.error('Error parsing WebSocket message:', e, "Data:", event.data);
-                showError('Error processing data from server');
-                // Consider closing the connection if data is consistently bad
-                // if(unsubscribeBtn) unsubscribeBtn.click();
-            }
-        };
-
-        socket.onclose = function(event) {
-            // --- FIX: Now has access to UI variables via outer scope ---
-            console.log('WebSocket connection closed:', event.code, event.reason);
-            // Only show error and reset UI if the close was *not* initiated by the user clicking unsubscribe
-            // Check if unsubscribeBtn exists and check its disabled state
-            if(unsubscribeBtn && !unsubscribeBtn.disabled) {
-                showError(`WebSocket connection closed unexpectedly (Code: ${event.code}). Please try subscribing again.`);
-                // Check if elements exist before manipulating
-                if (symbolSelect) symbolSelect.disabled = false;
-                if (subscribeBtn) subscribeBtn.disabled = false;
-                if (unsubscribeBtn) unsubscribeBtn.disabled = true; // Already closed, disable unsubscribe
-                if (tickerDataContainer) tickerDataContainer.style.display = 'none';
-                currentSymbol = '';
-                sessionMinPrice = null; // Reset on close
-                sessionMaxPrice = null;
-            } else {
-                console.log("WebSocket closed normally (likely initiated by user unsubscribe).");
-            }
-        };
-
-        socket.onerror = function(error) {
-            // --- FIX: Now has access to UI variables via outer scope ---
-            console.error('WebSocket error:', error);
-            showError('WebSocket connection error. Check console for details.');
-            // Check if elements exist before manipulating
-            if (symbolSelect) symbolSelect.disabled = false;
-            if (subscribeBtn) subscribeBtn.disabled = false;
-            if (unsubscribeBtn) unsubscribeBtn.disabled = true;
-            if (tickerDataContainer) tickerDataContainer.style.display = 'none';
-            currentSymbol = '';
-            sessionMinPrice = null; // Reset on error
-            sessionMaxPrice = null;
-            // Ensure socket is properly closed if an error occurs
-            if (socket && socket.readyState !== WebSocket.CLOSED) {
-                socket.close();
-            }
-        };
+        socket.onclose=()=>resetUI();
+        socket.onerror=()=>{showError('WebSocket error'); socket.close();}
     }
 
-    function updateTickerData(data) {
-        // Check if required elements exist before updating
-        const lastPriceEl = document.getElementById('lastPrice');
-        const priceChangeEl = document.getElementById('priceChange');
-        const priceChangePercentEl = document.getElementById('priceChangePercent');
-        const summaryCurrentPriceEl = document.getElementById('summaryCurrentPrice');
-        const summaryMinPriceEl = document.getElementById('summaryMinPrice');
-        const summaryMaxPriceEl = document.getElementById('summaryMaxPrice');
+    function updateTicker(d){
+        byId('lastPrice').textContent=fmtNum(+d.lastPrice);
+        byId('priceChange').textContent=fmtNum(+d.priceChange);
+        byId('priceChangePercent').innerHTML=fmtPerc(+d.priceChangePercent);
+        // min/max/session updates
+        const p=+d.lastPrice;
+        byId('summaryCurrentPrice').textContent=fmtNum(p);
+        if(sessionMin===null||p<sessionMin) sessionMin=p;
+        if(sessionMax===null||p>sessionMax) sessionMax=p;
+        byId('summaryMinPrice').textContent=fmtNum(sessionMin);
+        byId('summaryMaxPrice').textContent=fmtNum(sessionMax);
 
-        if (!lastPriceEl || !priceChangeEl || !priceChangePercentEl ||
-            !summaryCurrentPriceEl || !summaryMinPriceEl || !summaryMaxPriceEl ||
-            !tickerDetailsBody) {
-            console.error("Ticker UI elements missing, cannot update data.");
-            return;
-        }
-
-
-        // Update main price display
-        lastPriceEl.textContent = formatNumber(parseFloat(data.lastPrice));
-        priceChangeEl.textContent = formatNumber(parseFloat(data.priceChange));
-        priceChangePercentEl.innerHTML = formatPercent(parseFloat(data.priceChangePercent));
-
-        // --- Update Min/Max/Current Summary ---
-        const currentPrice = parseFloat(data.lastPrice);
-        if (!isNaN(currentPrice)) {
-            // Update Current Price in the summary table
-            summaryCurrentPriceEl.textContent = formatNumber(currentPrice);
-            // Update Session Min Price
-            if (sessionMinPrice === null || currentPrice < sessionMinPrice) {
-                sessionMinPrice = currentPrice;
-                summaryMinPriceEl.textContent = formatNumber(sessionMinPrice);
-            }
-            // Update Session Max Price
-            if (sessionMaxPrice === null || currentPrice > sessionMaxPrice) {
-                sessionMaxPrice = currentPrice;
-                summaryMaxPriceEl.textContent = formatNumber(sessionMaxPrice);
-            }
-        } else {
-            console.warn("Received invalid lastPrice for summary:", data.lastPrice);
-            // Optionally clear or show '---' if price is invalid
-            // summaryCurrentPriceEl.textContent = '---';
-            return; // Don't update details table if price is fundamentally wrong
-        }
-        // --- End Summary Update ---
-
-        // --- Update details table (remains mostly the same) ---
-        tickerDetailsBody.innerHTML = ''; // Clear previous details
-
-        const displayOrder = [
-            'symbol', 'openPrice', 'highPrice', 'lowPrice', 'lastPrice',
-            'volume', 'quoteVolume', 'priceChange', 'priceChangePercent',
-            'weightedAvgPrice', 'prevClosePrice', 'lastQty', 'bidPrice', 'askPrice',
-            'openTime', 'closeTime'
-        ];
-
-        const addedKeys = new Set();
-        displayOrder.forEach(key => {
-            if (data.hasOwnProperty(key)) {
-                addRow(tickerDetailsBody, key, data[key]);
-                addedKeys.add(key);
-            }
-        });
-
-        // Add any remaining keys not in the display order
-        for (const [key, value] of Object.entries(data)) {
-            if (!addedKeys.has(key)) {
-                addRow(tickerDetailsBody, key, value);
-            }
-        }
-        // --- End Details Table Update ---
+        // update details
+        const tbody=byId('tickerDetails');
+        tbody.innerHTML='';
+        Object.entries(d).forEach(([k,v])=>{
+            let tr=document.createElement('tr'),
+                td1=document.createElement('td'),td2=document.createElement('td');
+            td1.textContent=fmtKey(k);
+            if(k==='priceChangePercent') td2.innerHTML=fmtPerc(+v);
+            else if(k.toLowerCase().includes('time') && !isNaN(v)) td2.textContent=new Date(+v).toLocaleString();
+            else if(!isNaN(v)) td2.textContent=fmtNum(+v);
+            else td2.textContent=String(v);
+            tr.append(td1, td2); tbody.append(tr);
+        })
     }
 
-    // addRow function remains the same as before
-    function addRow(tableBody, key, value) {
-        const row = document.createElement('tr');
-
-        const paramCell = document.createElement('td');
-        paramCell.textContent = formatKeyName(key);
-        row.appendChild(paramCell);
-
-        const valueCell = document.createElement('td');
-        let displayValue = value;
-
-        // Attempt to format based on key name conventions or value type
-        if (key.toLowerCase().includes('time') && typeof value === 'number' && value > 1000000000) { // Basic check for timestamp
-            try {
-                displayValue = new Date(value).toLocaleString();
-            } catch (e) {
-                console.warn("Could not format timestamp:", value);
-                displayValue = value; // Fallback to original value
-            }
-        } else if (key === 'priceChangePercent') {
-            valueCell.innerHTML = formatPercent(parseFloat(value));
-            row.appendChild(valueCell);
-            tableBody.appendChild(row);
-            return; // Already appended
-        } else if (typeof value === 'string' && !isNaN(parseFloat(value)) && (key.toLowerCase().includes('price') || key.toLowerCase().includes('qty') || key.toLowerCase().includes('volume') || key.toLowerCase().includes('change'))) {
-            // Format strings that look like numbers, especially for price/qty/volume
-            displayValue = formatNumber(parseFloat(value));
-        } else if (typeof value === 'number') {
-            displayValue = formatNumber(value);
-        } else if (value === null || value === undefined) {
-            displayValue = '---';
-        }
-        // Add boolean handling if needed:
-        // else if (typeof value === 'boolean') {
-        //     displayValue = value ? 'Yes' : 'No';
-        // }
-
-        valueCell.textContent = String(displayValue); // Ensure it's a string
-        row.appendChild(valueCell);
-        tableBody.appendChild(row);
+    function resetSession(){
+        sessionMin=sessionMax=null;
+        ['summaryCurrentPrice','summaryMinPrice','summaryMaxPrice'].forEach(id=>byId(id).textContent='---');
+        byId('currentSymbol').textContent=currentSymbol||'';
+        ['lastPrice','priceChange','priceChangePercent'].forEach(id=>byId(id).textContent='---');
+        byId('tickerDetails').innerHTML='<tr><td colspan="2">Waiting for data...</td></tr>';
     }
 
-    // formatKeyName function remains the same
-    function formatKeyName(key) {
-        // Handle potential snake_case or camelCase to Title Case
-        return key
-            .replace(/([A-Z])/g, ' $1') // Add space before capital letters
-            .replace(/_/g, ' ')       // Replace underscores with spaces
-            .replace(/^./, str => str.toUpperCase()); // Capitalize the first letter
+    function resetUI(){
+        const t=byId('tickerData');
+        hide(t); currentSymbol=''; resetSession();
+        const sel=byId('symbol');
+        sel.disabled=false;
+        byId('subscribeBtn').disabled=false;
+        byId('unsubscribeBtn').disabled=true;
     }
 
-    // formatNumber function remains the same
-    function formatNumber(value) {
-        if (value === null || value === undefined || isNaN(value)) return '---';
-        // Dynamic formatting based on value magnitude
-        let options = {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 8 // Default max
-        };
-        const absValue = Math.abs(value);
-
-        if (absValue === 0) {
-            options.maximumFractionDigits = 2;
-        } else if (absValue > 10000) {
-            options.maximumFractionDigits = 2; // Large numbers
-        } else if (absValue >= 1) {
-            options.maximumFractionDigits = 4; // Medium numbers
-        } else if (absValue > 0.0001) {
-            options.maximumFractionDigits = 6; // Small decimals
-        } else {
-            options.maximumFractionDigits = 8; // Very small decimals
-        }
-
-        // Avoid unnecessary trailing zeros beyond minimumFractionDigits
-        const formatted = new Intl.NumberFormat('en-US', options).format(value);
-        // Optional: Trim trailing zeros if they go beyond minFractionDigits, but this is complex with Intl.NumberFormat
-        return formatted;
+    function showError(msg){
+        const errC=byId('errorContainer');
+        byId('errorMessage').textContent=msg;
+        show(errC); hide(byId('tickerData'));
     }
 
+    function fmtKey(k){ return k.replace(/([A-Z])/g,' $1').replace(/^./, m=>m.toUpperCase()); }
 
-    // formatPercent function remains the same
-    function formatPercent(value) {
-        if (value === null || value === undefined || isNaN(value)) return '--- <span class="neutral">%</span>'; // Added neutral class
-        const formattedValue = (value / 100); // Convert percentage value (e.g., 1.49) to decimal (0.0149) for Intl formatting
-        const formattedString = new Intl.NumberFormat('en-US', {
-            style: 'percent',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-            signDisplay: 'exceptZero' // Show sign for non-zero values
-        }).format(formattedValue);
-
-        const span = document.createElement('span');
-        span.textContent = formattedString;
-        // Add class based on value
-        if (value > 0) {
-            span.className = 'positive';
-        } else if (value < 0) {
-            span.className = 'negative';
-        } else {
-            span.className = 'neutral'; // Class for zero change
-        }
-        return span.outerHTML;
+    function fmtNum(v){
+        if(v===null||v===undefined||isNaN(v)) return '---';
+        let opts={minimumFractionDigits:2,maximumFractionDigits:8};
+        const abs=Math.abs(v);
+        if(abs===0) opts.maximumFractionDigits=2;
+        else if(abs>10000) opts.maximumFractionDigits=2;
+        else if(abs>=1) opts.maximumFractionDigits=4;
+        else if(abs>0.0001) opts.maximumFractionDigits=6;
+        else opts.maximumFractionDigits=8;
+        return new Intl.NumberFormat('en-US',opts).format(v);
     }
 
-    // showError function remains the same
-    function showError(message) {
-        // Check if errorContainer and errorMessage exist
-        const localErrorContainer = document.getElementById('errorContainer');
-        const localErrorMessage = document.getElementById('errorMessage');
-        const localTickerDataContainer = document.getElementById('tickerData');
-
-        if (localErrorMessage && localErrorContainer) {
-            localErrorMessage.textContent = message;
-            localErrorContainer.style.display = 'block';
-        } else {
-            console.error("Error container not found, logging error:", message); // Fallback
-        }
-
-        // Hide ticker data if error occurs
-        if(localTickerDataContainer) {
-            localTickerDataContainer.style.display = 'none';
-        }
+    function fmtPerc(v){
+        if(v===null||v===undefined||isNaN(v)) return '---';
+        const pct=(v/100);
+        return new Intl.NumberFormat('en-US',{style:'percent',minimumFractionDigits:2,maximumFractionDigits:2,signDisplay:'exceptZero'}).format(pct);
     }
 </script>
 </body>

@@ -1,3 +1,18 @@
+.container { max-width:1300px;margin:0 auto;padding:20px; }
+.order-form-container {display:flex;justify-content:space-around;margin-top:20px;padding-top:20px;border-top:1px solid #ccc;}
+.order-form {border:1px solid #ddd;padding:15px;border-radius:5px;width:45%;background:#f9f9f9;}
+.order-form h3{text-align:center;margin:0 0 10px 0;}
+.order-form label{font-weight:bold;display:block;margin:10px 0 5px;}
+.order-form input, .order-form select{width:95%;padding:8px;margin-bottom:10px;}
+.order-form button{width:100%;padding:10px;font-size:1em;border:none;border-radius:4px;cursor:pointer;}
+.buy-button{background:#4CAF50;color:#fff;}
+.sell-button{background:#f44336;color:#fff;}
+.order-message{margin:15px 0; padding:10px; border-radius:4px; text-align:center;}
+.order-success{background:#dff0d8;color:#3c763d;border:1px solid #d6e9c6;}
+.order-error{background:#f2dede;color:#a94442;border:1px solid #ebccd1;}
+.api-key-warning{background:#fff3cd;color:#856404;border:1px solid #ffeeba;padding:10px;margin-bottom:15px;border-radius:4px;font-size:.9em;}
+.price-input-group{display:block;}
+
 body {
     font-family: Arial, sans-serif;
     line-height: 1.6;

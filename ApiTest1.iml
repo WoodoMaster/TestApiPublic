@@ -53,5 +53,6 @@
     <orderEntry type="library" name="Maven: org.apache.tomcat.embed:tomcat-embed-websocket:9.0.73" level="project" />
     <orderEntry type="library" name="Maven: org.apache.tomcat.embed:tomcat-embed-core:9.0.73" level="project" />
     <orderEntry type="library" name="Maven: org.apache.tomcat:tomcat-annotations-api:9.0.73" level="project" />
+    <orderEntry type="library" name="J2EE 1.4-J2EE 1.4" level="project" />
   </component>
 </module>
