@@ -2,99 +2,51 @@ package com.example.websocket.scheduler;
 
 import com.example.websocket.model.SessionData;
 import com.example.service.DzengiApiService;
-import com.google.gson.JsonObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.io.IOException;
 import java.util.concurrent.*;
 
 @Component
 public class TickerUpdater {
 
-    private static final Logger logger = LoggerFactory.getLogger(TickerUpdater.class);
-    private static final int UPDATE_INTERVAL_SECONDS = 5;
+    private final DzengiApiService api;
+    private final ScheduledExecutorService pool;
 
-    private final ScheduledExecutorService scheduler;
-    private final DzengiApiService dzengiApiService;
+    @Value("${websocket.update-interval:5}")
+    private int intervalSeconds;
 
-    public TickerUpdater(DzengiApiService apiService) {
-        this.dzengiApiService = apiService;
-        int corePoolSize = Math.max(2, Runtime.getRuntime().availableProcessors() / 2);
-        this.scheduler = Executors.newScheduledThreadPool(corePoolSize);
+    public TickerUpdater(DzengiApiService api) {
+        this.api = api;
+        int poolSize = Math.max(2, Runtime.getRuntime().availableProcessors() / 2);
+        this.pool = Executors.newScheduledThreadPool(poolSize);
     }
 
-    public ScheduledFuture<?> schedule(SessionData sessionData, String symbol) {
-        sessionData.setCurrentSymbol(symbol);
-        return scheduler.scheduleWithFixedDelay(
-                () -> updateTickerData(sessionData),
-                0, UPDATE_INTERVAL_SECONDS, TimeUnit.SECONDS);
+    public ScheduledFuture<?> schedule(SessionData data, String symbol) {
+        data.setCurrentSymbol(symbol);
+        return pool.scheduleWithFixedDelay(() -> doUpdate(data), 0, intervalSeconds, TimeUnit.SECONDS);
     }
 
-    public void shutdown() {
-        scheduler.shutdown();
-        try {
-            if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
-                scheduler.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            scheduler.shutdownNow();
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    public void sendErrorMessage(WebSocketSession session, String errorMessage) {
-        JsonObject errorJson = new JsonObject();
-        errorJson.addProperty("error", errorMessage);
-        sendMessage(session, errorJson.toString());
-    }
-
-    private void updateTickerData(SessionData data) {
-        if (data.isRunning()) return;
+    private void doUpdate(SessionData data){
+        if(data.isRunning()) return;
         data.setRunning(true);
+        try{
+            var resp = api.getTickerData(data.getCurrentSymbol());
+            send(data.getSession(), resp.toString());
+        }catch(Exception e){
+            send(data.getSession(), "{\"error\":\""+e.getMessage()+"\"}");
+        } finally { data.setRunning(false); }
+    }
 
-        WebSocketSession session = data.getSession();
-        String symbol = data.getCurrentSymbol();
-
-        if (symbol == null || !session.isOpen()) {
-            if (data.getFuture() != null && !data.getFuture().isDone()) {
-                data.getFuture().cancel(true);
-            }
-            data.setRunning(false);
-            return;
-        }
-
-        try {
-            JsonObject tickerJson = dzengiApiService.getTickerData(symbol);
-
-            if (tickerJson.has("error_code") || tickerJson.has("code")) {
-                String errMsg = tickerJson.has("error_message") ? tickerJson.get("error_message").getAsString()
-                        : tickerJson.has("msg") ? tickerJson.get("msg").getAsString() : "Unknown API error";
-                sendErrorMessage(session, "API Error: " + errMsg);
-            } else {
-                sendMessage(session, tickerJson.toString());
-            }
-        } catch (Exception e) {
-            logger.error("Error updating ticker for {}: {}", symbol, e.getMessage());
-            sendErrorMessage(session, "Failed to fetch ticker data");
-        } finally {
-            data.setRunning(false);
+    private void send(WebSocketSession session, String msg){
+        synchronized(session) {
+            try {
+                if(session.isOpen()) session.sendMessage(new TextMessage(msg));
+            } catch(Exception ignored){}
         }
     }
 
-    private void sendMessage(WebSocketSession session, String payload) {
-        synchronized (session) {
-            if (session.isOpen()) {
-                try {
-                    session.sendMessage(new TextMessage(payload));
-                } catch (IOException e) {
-                    logger.error("Failed to send message", e);
-                }
-            }
-        }
-    }
-
+    public void shutdown() { pool.shutdown(); }
 }

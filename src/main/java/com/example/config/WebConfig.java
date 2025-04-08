@@ -4,6 +4,7 @@ import com.example.websocket.handler.RealtimeTickerHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewResolverRegistry;
@@ -18,12 +19,8 @@ import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 @Configuration
 @EnableWebMvc
 @EnableWebSocket
-@ComponentScan(basePackages = {
-        "com.example.controller",
-        "com.example.service",
-        "com.example.util",
-        "com.example.websocket"   // Включаем все websocket-related классы: handler, session, model, scheduler
-})
+@ComponentScan(basePackages = "com.example")
+@PropertySource("classpath:application.properties")
 public class WebConfig implements WebMvcConfigurer, WebSocketConfigurer {
 
     private final RealtimeTickerHandler realtimeTickerHandler;
@@ -39,26 +36,23 @@ public class WebConfig implements WebMvcConfigurer, WebSocketConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/resources/**")
-                .addResourceLocations("/resources/");
+        registry.addResourceHandler("/resources/**").addResourceLocations("/resources/");
     }
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         DefaultHandshakeHandler handshakeHandler =
                 new DefaultHandshakeHandler(new TomcatRequestUpgradeStrategy());
-
-        registry.addHandler(realtimeTickerHandler, "/ws/ticker")
-                .setAllowedOrigins("*") // TODO: Ограничить конкретными origin для production
+        registry.addHandler(realtimeTickerHandler, "/ws/ticker").setAllowedOrigins("*")
                 .setHandshakeHandler(handshakeHandler);
     }
 
     @Bean
     public ServletServerContainerFactoryBean createWebSocketContainer() {
-        ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
+        var container = new ServletServerContainerFactoryBean();
         container.setMaxTextMessageBufferSize(65536);
         container.setMaxBinaryMessageBufferSize(65536);
-        container.setMaxSessionIdleTimeout(300_000L);
+        container.setMaxSessionIdleTimeout(300000L);
         return container;
     }
 }
